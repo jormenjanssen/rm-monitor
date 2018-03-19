@@ -49,6 +49,9 @@ func (*rimoteMonitor) run(ctx context.Context, logger *Logger, rimoteMessageChan
 		// log any errors occured
 		if err != nil {
 			logger.Warningf("Got error while trying to fetch remote status: %v", err)
+
+			// Send empty response to channel
+			rimoteMessageChannel <- RimoteMessage{}
 		}
 
 		// Report our status

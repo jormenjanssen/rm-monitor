@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"syscall"
 )
 
 func monitorContext(logger *Logger, cancel func(), signalChannel chan os.Signal) {
@@ -22,7 +23,7 @@ func CreateApplicationContext(logger *Logger) context.Context {
 
 	// Passing no signals to Notify means that
 	// all signals will be sent to the channel.
-	signal.Notify(signalChannel)
+	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM)
 
 	ctx := context.TODO()
 	ctx, cancel := context.WithCancel(ctx)
