@@ -51,7 +51,7 @@ func (*rimoteMonitor) run(ctx context.Context, logger *Logger, rimoteMessageChan
 			logger.Warningf("Got error while trying to fetch remote status: %v", err)
 
 			// Send empty response to channel
-			rimoteMessageChannel <- RimoteMessage{}
+			rimoteMessageChannel <- RimoteMessage{IsConnected: false, HasHardwareID: false}
 		}
 
 		// Only post to our channel when we don't have any api errors.

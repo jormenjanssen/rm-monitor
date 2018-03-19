@@ -42,7 +42,7 @@ func executeWithLogger(logger *Logger, context string, fn func() error) {
 	err := fn()
 
 	if err != nil {
-		logger.WarningF("%v: %v", context, err)
+		logger.WarningF("%v %v", context, err)
 	}
 }
 
