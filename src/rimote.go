@@ -55,7 +55,7 @@ func (*rimoteMonitor) run(ctx context.Context, logger *Logger, rimoteMessageChan
 		}
 
 		// Only post to our channel when we don't have any api errors.
-		if err != nil {
+		if err == nil {
 			// Report our status
 			rimoteMessageChannel <- RimoteMessage{IsConnected: apiMessage.IsConnected, HasHardwareID: true}
 		}
