@@ -80,7 +80,7 @@ func init() {
 	initFormatPlaceholders()
 }
 
-// Returns a proper string to be outputted for a particular info
+// Output Returns a proper string to be outputted for a particular info
 func (r *Info) Output(format string) string {
 	msg := fmt.Sprintf(format,
 		r.ID,       // %[1] // %{id}
