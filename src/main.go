@@ -72,6 +72,13 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 
 			err := SetWifiLed(ethernetmessage.Wifi0.Configured, ethernetmessage.Wifi0.Connected)
 			logGpioOnError(logger, err)
+
+			err = SetEth0Led(ethernetmessage.Eth0.Configured, ethernetmessage.Eth0.Connected)
+			logGpioOnError(logger, err)
+
+			err = SetEth1Led(ethernetmessage.Eth1.Configured, ethernetmessage.Eth1.Connected)
+			logGpioOnError(logger, err)
+
 		default:
 			time.Sleep(timeout)
 

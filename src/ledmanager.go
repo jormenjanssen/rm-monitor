@@ -33,6 +33,10 @@ const (
 	LedPowerGreen ManagerGpio = 112
 	// LedPowerBlue led power blue
 	LedPowerBlue ManagerGpio = 120
+	// LedWanRed led wan red (eth0)
+	LedWanRed ManagerGpio = 83
+	// LedLanRed led lan red (eth1)
+	LedLanRed ManagerGpio = 88
 )
 
 // SystemLed type
@@ -67,6 +71,35 @@ const (
 	Good SignalStrength = 3
 )
 
+// SetEth0Led set the ethernet led according to the state
+func SetEth0Led(configured bool, connected bool) error {
+	return setEthernetLed(LedWanRed, configured, connected)
+}
+
+// SetEth1Led set the ethernet led according to the state
+func SetEth1Led(configured bool, connected bool) error {
+	return setEthernetLed(LedLanRed, configured, connected)
+}
+
+func setEthernetLed(gpio ManagerGpio, configured bool, connected bool) error {
+
+	return gpioFunc(gpio, func(pin Pin) error {
+
+		// If we are not configured then disable our red led
+		if !configured {
+			return pin.Low()
+		}
+
+		// If we're connected drop the red led
+		if connected {
+			return pin.Low()
+		}
+
+		// If we're configured but don't have a cable detected, the show our red led
+		return pin.High()
+	})
+}
+
 // SetRimoteLed sets the rimote led
 func SetRimoteLed(connected bool) error {
 
@@ -99,7 +132,6 @@ func SetRimoteLed(connected bool) error {
 
 // SetWifiLed sets the wifi led
 func SetWifiLed(configured bool, connected bool) error {
-
 	return nil
 }
 
@@ -135,6 +167,8 @@ func setup() error {
 	gpioMapping = map[ManagerGpio]Pin{
 		LedPowerBlue:  NewOutput(uint(LedPowerBlue), true),
 		LedPowerGreen: NewOutput(uint(LedPowerGreen), true),
+		LedWanRed:     NewOutput(uint(LedWanRed), true),
+		LedLanRed:     NewOutput(uint(LedLanRed), true),
 	}
 
 	return nil
