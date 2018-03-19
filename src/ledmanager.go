@@ -137,7 +137,7 @@ func setup() error {
 		LedPowerGreen: NewOutput(uint(LedPowerGreen), true),
 	}
 
-	return errGpioNotInitialized
+	return nil
 }
 
 // GetPin returns the pin if exported
