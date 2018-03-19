@@ -112,13 +112,13 @@ func setEthernetLed(gpio ManagerGpio, configured bool, connected bool) error {
 func SetRimoteLed(connected bool) error {
 
 	// Set blue led on
-	err := gpioFunc(LedPowerBlue, func(pin Pin) error {
+	err := gpioFunc(LedPowerBlue, func(bpin Pin) error {
 
 		if connected {
-			return pin.High()
+			return bpin.High()
 		}
 
-		return pin.Low()
+		return bpin.Low()
 	})
 
 	if err != nil {
@@ -126,13 +126,13 @@ func SetRimoteLed(connected bool) error {
 	}
 
 	// Set led green inverted
-	err = gpioFunc(LedPowerGreen, func(pin Pin) error {
+	err = gpioFunc(LedPowerGreen, func(gpin Pin) error {
 
 		if connected {
-			return pin.Low()
+			return gpin.Low()
 		}
 
-		return pin.High()
+		return gpin.High()
 	})
 
 	return err
