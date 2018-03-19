@@ -70,7 +70,8 @@ const (
 // SetRimoteLed sets the rimote led
 func SetRimoteLed(connected bool) error {
 
-	return gpioFunc(LedPowerBlue, func(pin Pin) error {
+	// Set blue led on
+	err := gpioFunc(LedPowerBlue, func(pin Pin) error {
 
 		if connected {
 			return pin.High()
@@ -78,6 +79,22 @@ func SetRimoteLed(connected bool) error {
 
 		return pin.Low()
 	})
+
+	if err != nil {
+		return err
+	}
+
+	// Set led green inverted
+	err = gpioFunc(LedPowerGreen, func(pin Pin) error {
+
+		if connected {
+			return pin.Low()
+		}
+
+		return pin.High()
+	})
+
+	return err
 }
 
 // SetWifiLed sets the wifi led
@@ -116,10 +133,9 @@ func setup() error {
 	}
 
 	gpioMapping = map[ManagerGpio]Pin{
-		LedPowerBlue: NewOutput(uint(LedPowerRed), false),
+		LedPowerBlue:  NewOutput(uint(LedPowerBlue), true),
+		LedPowerGreen: NewOutput(uint(LedPowerGreen), true),
 	}
-
-	NewOutput(uint(LedPowerBlue), false)
 
 	return errGpioNotInitialized
 }
