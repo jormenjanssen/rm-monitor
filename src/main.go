@@ -37,10 +37,12 @@ func main() {
 	log.Info("Monitor is going to shutdown ...")
 }
 
-func logGpioOnError(logger *Logger, err error) {
+func executeWithLogger(logger *Logger, context string, fn func() error) {
+
+	err := fn()
 
 	if err != nil {
-		logger.WarningF("%v", err)
+		logger.WarningF("%v: %v", context, err)
 	}
 }
 
@@ -62,22 +64,27 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 			msg.RimoteStatus().SetRimoteGUIDPresent(rimoteMessage.HasHardwareID)
 			msg.RimoteStatus().SetRimoteConnected(rimoteMessage.IsConnected)
 
-			err := SetRimoteLed(rimoteMessage.IsConnected)
-			logGpioOnError(logger, err)
+			executeWithLogger(logger, "led:rimote", func() error {
+				return SetRimoteLed(rimoteMessage.IsConnected)
+			})
+
 		case ethernetmessage := <-monitorChannel.EthernetMessageChannel:
 			msg.ConnectionStatus().SetEth0Status(ethernetmessage.Eth0.Connected)
 			msg.ConnectionStatus().SetEth1Status(ethernetmessage.Eth1.Connected)
 			msg.ConnectionStatus().SetEthernetConfigurationStatus(ethernetmessage.EthernetConfigured)
 			msg.ConnectionStatus().SetWifiEnabled(ethernetmessage.Wifi0.Connected)
 
-			err := SetWifiLed(ethernetmessage.Wifi0.Configured, ethernetmessage.Wifi0.Connected)
-			logGpioOnError(logger, err)
+			executeWithLogger(logger, "led:wifi", func() error {
+				return SetWifiLed(ethernetmessage.Wifi0.Configured, ethernetmessage.Wifi0.Connected)
+			})
 
-			err = SetEth0Led(ethernetmessage.Eth0.Configured, ethernetmessage.Eth0.Connected)
-			logGpioOnError(logger, err)
+			executeWithLogger(logger, "led:eth0", func() error {
+				return SetEth0Led(ethernetmessage.Eth0.Configured, ethernetmessage.Eth0.Connected)
+			})
 
-			err = SetEth1Led(ethernetmessage.Eth1.Configured, ethernetmessage.Eth1.Connected)
-			logGpioOnError(logger, err)
+			executeWithLogger(logger, "led:eth1", func() error {
+				return SetEth1Led(ethernetmessage.Eth1.Configured, ethernetmessage.Eth1.Connected)
+			})
 
 		default:
 			time.Sleep(timeout)
