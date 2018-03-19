@@ -77,9 +77,9 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 			executeWithLogger(logger, "led:wifi", func() error {
 				if ethernetmessage.Wifi0.Connected {
 					return SetWifiLed(GoodSignal)
-				} else {
-					return SetWifiLed(NoSignal)
 				}
+
+				return SetWifiLed(NoSignal)
 			})
 
 			executeWithLogger(logger, "led:eth0", func() error {
@@ -89,7 +89,6 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 			executeWithLogger(logger, "led:eth1", func() error {
 				return SetEth1Led(ethernetmessage.Eth1.Configured, ethernetmessage.Eth1.Connected)
 			})
-
 		default:
 			time.Sleep(timeout)
 

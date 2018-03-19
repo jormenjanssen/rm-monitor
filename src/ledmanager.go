@@ -186,7 +186,7 @@ func SignalStrengthToGpio(redSignal ManagerGpio, greenSignal ManagerGpio, blueSi
 		}
 
 		if strength == GoodSignal {
-			r.High()
+			r.Low()
 			g.High()
 		}
 
