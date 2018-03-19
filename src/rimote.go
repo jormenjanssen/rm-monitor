@@ -52,13 +52,13 @@ func (*rimoteMonitor) run(ctx context.Context, logger *Logger, rimoteMessageChan
 
 			// Send empty response to channel
 			rimoteMessageChannel <- RimoteMessage{}
-
-			// Continue the execution but skip message
-			continue
 		}
 
-		// Report our status
-		rimoteMessageChannel <- RimoteMessage{IsConnected: apiMessage.IsConnected, HasHardwareID: true}
+		// Only post to our channel when we don't have any api errors.
+		if err != nil {
+			// Report our status
+			rimoteMessageChannel <- RimoteMessage{IsConnected: apiMessage.IsConnected, HasHardwareID: true}
+		}
 
 		// Wait a while before retrying ...
 		time.Sleep(defaultTimeout)

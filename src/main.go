@@ -75,7 +75,11 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 			msg.ConnectionStatus().SetWifiEnabled(ethernetmessage.Wifi0.Connected)
 
 			executeWithLogger(logger, "led:wifi", func() error {
-				return SetWifiLed(ethernetmessage.Wifi0.Configured, ethernetmessage.Wifi0.Connected)
+				if ethernetmessage.Wifi0.Connected {
+					return SetWifiLed(GoodSignal)
+				} else {
+					return SetWifiLed(NoSignal)
+				}
 			})
 
 			executeWithLogger(logger, "led:eth0", func() error {

@@ -37,6 +37,12 @@ const (
 	LedWanRed ManagerGpio = 83
 	// LedLanRed led lan red (eth1)
 	LedLanRed ManagerGpio = 88
+	// LedWifiRed led wifi red
+	LedWifiRed ManagerGpio = 122
+	// LedWifiGreen led wifi red
+	LedWifiGreen ManagerGpio = 127
+	// LedWifiBlue led wifi red
+	LedWifiBlue ManagerGpio = 117
 )
 
 // SystemLed type
@@ -63,12 +69,14 @@ const (
 type SignalStrength uint
 
 const (
-	// Weak low or weak signal
-	Weak SignalStrength = 1
-	// Fair signal
-	Fair SignalStrength = 2
-	// Good signal strength
-	Good SignalStrength = 3
+	// NoSignal error or no signal
+	NoSignal SignalStrength = 0
+	// WeakSignal or weak signal
+	WeakSignal SignalStrength = 1
+	// FairSignal strength
+	FairSignal SignalStrength = 2
+	// GoodSignal strength
+	GoodSignal SignalStrength = 3
 )
 
 // SetEth0Led set the ethernet led according to the state
@@ -131,8 +139,8 @@ func SetRimoteLed(connected bool) error {
 }
 
 // SetWifiLed sets the wifi led
-func SetWifiLed(configured bool, connected bool) error {
-	return nil
+func SetWifiLed(strength SignalStrength) error {
+	return SignalStrengthToGpio(LedWifiRed, LedWifiGreen, LedWifiBlue, strength)
 }
 
 func gpioFunc(gpio ManagerGpio, fn func(Pin) error) error {
@@ -154,6 +162,72 @@ func gpioFunc(gpio ManagerGpio, fn func(Pin) error) error {
 	return fn(pin)
 }
 
+// SignalStrengthToGpio converts signal strength to gpio
+func SignalStrengthToGpio(redSignal ManagerGpio, greenSignal ManagerGpio, blueSignal ManagerGpio, strength SignalStrength) error {
+
+	return gpioSignalFunc(redSignal, greenSignal, blueSignal, func(r Pin, g Pin, b Pin) error {
+
+		// Blue is always low.
+		b.Low()
+
+		if strength == NoSignal {
+			r.Low()
+			g.Low()
+		}
+
+		if strength == WeakSignal {
+			r.High()
+			g.Low()
+		}
+
+		if strength == FairSignal {
+			r.High()
+			g.High()
+		}
+
+		if strength == GoodSignal {
+			r.High()
+			g.High()
+		}
+
+		return nil
+	})
+
+}
+
+func gpioSignalFunc(gpioLowSignal ManagerGpio, gpioMediumSignal ManagerGpio, gpioHighSignal ManagerGpio, fn func(l Pin, m Pin, h Pin) error) error {
+
+	// First look if we're setup.
+	err := setup()
+	if err != nil {
+		return err
+	}
+
+	// Try to get our low pin value.
+	pinLow, err := GetPin(gpioLowSignal)
+
+	if err != nil {
+		return err
+	}
+
+	// Try to get our middle pin value.
+	pinMed, err := GetPin(gpioMediumSignal)
+
+	if err != nil {
+		return err
+	}
+
+	// Try to get our high pin value.
+	pinHigh, err := GetPin(gpioHighSignal)
+
+	if err != nil {
+		return err
+	}
+
+	// Execute our closure.
+	return fn(pinLow, pinMed, pinHigh)
+}
+
 func setup() error {
 
 	if !IsTargetDevice() {
@@ -169,6 +243,9 @@ func setup() error {
 		LedPowerGreen: NewOutput(uint(LedPowerGreen), true),
 		LedWanRed:     NewOutput(uint(LedWanRed), true),
 		LedLanRed:     NewOutput(uint(LedLanRed), true),
+		LedWifiRed:    NewOutput(uint(LedWifiRed), true),
+		LedWifiGreen:  NewOutput(uint(LedWifiGreen), true),
+		LedWifiBlue:   NewOutput(uint(LedWifiBlue), true),
 	}
 
 	return nil
