@@ -20,7 +20,11 @@ func main() {
 	ctx := CreateApplicationContext(log)
 
 	// Log we're starting.
-	log.Info("Monitor started")
+	if IsDebugMode() {
+		log.Debug("Monitor started [Debug]")
+	} else {
+		log.Info("Monitor started")
+	}
 
 	// Create the channels
 	monitorChannel := CreateMonitorChannel()
@@ -28,8 +32,10 @@ func main() {
 	// Defer closing of the channels
 	defer monitorChannel.CloseChannels()
 
+	// Configure all our watches
 	MonitorRimoteConnectionStatus(ctx, log, monitorChannel.RimoteMessageChannel)
 	NewEthernetMonitor(ctx, monitorChannel.EthernetMessageChannel)
+	WatchModem(ctx, log, monitorChannel.ModemStatusMessageChannel)
 
 	// Run our message loop blocking ...
 	messageloop(ctx, log, monitorChannel)
