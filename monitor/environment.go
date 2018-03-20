@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"runtime"
 )
 
@@ -12,4 +13,9 @@ func IsTargetDevice() bool {
 	}
 
 	return true
+}
+
+// IsDebugMode check if we have debug enabled
+func IsDebugMode() bool {
+	return os.Getenv("DEBUG") != ""
 }
