@@ -9,7 +9,11 @@ import (
 
 func monitorContext(logger *Logger, cancel func(), signalChannel chan os.Signal) {
 	s := <-signalChannel
-	logger.DebugF("Got signal: %v invoking cancellation of context", s)
+
+	if IsDebugMode() {
+		logger.DebugF("Got signal: %v invoking cancellation of context", s)
+	}
+
 	cancel()
 }
 
