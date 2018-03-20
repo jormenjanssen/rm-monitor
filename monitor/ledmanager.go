@@ -43,6 +43,12 @@ const (
 	LedWifiGreen ManagerGpio = 127
 	// LedWifiBlue led wifi red
 	LedWifiBlue ManagerGpio = 117
+	// LedBroadbandRed led 3G red
+	LedBroadbandRed ManagerGpio = 136
+	// LedBroadbandGreen led 3G red
+	LedBroadbandGreen ManagerGpio = 114
+	// LedBroadbandBlue led 3G red
+	LedBroadbandBlue ManagerGpio = 118
 )
 
 // SystemLed type
@@ -103,7 +109,7 @@ func setEthernetLed(gpio ManagerGpio, configured bool, connected bool) error {
 			return pin.Low()
 		}
 
-		// If we're configured but don't have a cable detected, the show our red led
+		// If we're configured but don't have a cable detected, then show our red led
 		return pin.High()
 	})
 }
@@ -141,6 +147,11 @@ func SetRimoteLed(connected bool) error {
 // SetWifiLed sets the wifi led
 func SetWifiLed(strength SignalStrength) error {
 	return SignalStrengthToGpio(LedWifiRed, LedWifiGreen, LedWifiBlue, strength)
+}
+
+// SetBroadbandLed sets the broadband led
+func SetBroadbandLed(strength SignalStrength) error {
+	return SignalStrengthToGpio(LedBroadbandRed, LedBroadbandGreen, LedBroadbandBlue, strength)
 }
 
 func gpioFunc(gpio ManagerGpio, fn func(Pin) error) error {
@@ -239,13 +250,16 @@ func setup() error {
 	}
 
 	gpioMapping = map[ManagerGpio]Pin{
-		LedPowerBlue:  NewOutput(uint(LedPowerBlue), true),
-		LedPowerGreen: NewOutput(uint(LedPowerGreen), true),
-		LedWanRed:     NewOutput(uint(LedWanRed), true),
-		LedLanRed:     NewOutput(uint(LedLanRed), true),
-		LedWifiRed:    NewOutput(uint(LedWifiRed), true),
-		LedWifiGreen:  NewOutput(uint(LedWifiGreen), true),
-		LedWifiBlue:   NewOutput(uint(LedWifiBlue), true),
+		LedPowerBlue:      NewOutput(uint(LedPowerBlue), true),
+		LedPowerGreen:     NewOutput(uint(LedPowerGreen), true),
+		LedWanRed:         NewOutput(uint(LedWanRed), true),
+		LedLanRed:         NewOutput(uint(LedLanRed), true),
+		LedWifiRed:        NewOutput(uint(LedWifiRed), true),
+		LedWifiGreen:      NewOutput(uint(LedWifiGreen), true),
+		LedWifiBlue:       NewOutput(uint(LedWifiBlue), true),
+		LedBroadbandRed:   NewOutput(uint(LedBroadbandRed), true),
+		LedBroadbandGreen: NewOutput(uint(LedBroadbandGreen), true),
+		LedBroadbandBlue:  NewOutput(uint(LedBroadbandBlue), true),
 	}
 
 	return nil

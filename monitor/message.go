@@ -47,6 +47,16 @@ func (generalStatus *GeneralStatus) GetHardwareStatus() bool {
 	return getBit(generalStatus.State1, 0)
 }
 
+// SetVccStatus sets the vcc status
+func (generalStatus *GeneralStatus) SetVccStatus(value bool) {
+	setBit(generalStatus.State1, 2, value)
+}
+
+// GetVccStatus get the software status
+func (generalStatus *GeneralStatus) GetVccStatus() bool {
+	return getBit(generalStatus.State1, 2)
+}
+
 // SetSoftwareStatus sets the software status
 func (generalStatus *GeneralStatus) SetSoftwareStatus(value bool) {
 	setBit(generalStatus.State1, 1, value)
@@ -57,24 +67,24 @@ func (generalStatus *GeneralStatus) GetSoftwareStatus() bool {
 	return getBit(generalStatus.State1, 1)
 }
 
-// GetEth0Status return the connection status of eth1
-func (connectionStatus *ConnectionStatus) GetEth0Status() bool {
-	return getBit(connectionStatus.State2, 6)
-}
-
-// GetEth1Status return the connection status of eth1
-func (connectionStatus *ConnectionStatus) GetEth1Status() bool {
-	return getBit(connectionStatus.State2, 7)
-}
-
 // SetEth0Status sets the connection status of eth0
 func (connectionStatus *ConnectionStatus) SetEth0Status(value bool) {
 	setBit(connectionStatus.State2, 6, value)
 }
 
-// SetEth1Status sets the connection status of eth0
+// GetEth0Status return the connection status of eth1
+func (connectionStatus *ConnectionStatus) GetEth0Status() bool {
+	return getBit(connectionStatus.State2, 6)
+}
+
+// SetEth1Status sets the connection status of eth1
 func (connectionStatus *ConnectionStatus) SetEth1Status(value bool) {
 	setBit(connectionStatus.State2, 7, value)
+}
+
+// GetEth1Status return the connection status of eth1
+func (connectionStatus *ConnectionStatus) GetEth1Status() bool {
+	return getBit(connectionStatus.State2, 7)
 }
 
 // GetEthernetConfigurationStatus return the ethernet connection status
@@ -95,6 +105,16 @@ func (connectionStatus *ConnectionStatus) SetWifiEnabled(value bool) {
 // GetWifiEnabled returns the wifi enabled status
 func (connectionStatus *ConnectionStatus) GetWifiEnabled() bool {
 	return getBit(connectionStatus.State1, 0)
+}
+
+// SetMobileInternetEnabled sets the ethernet connection status
+func (connectionStatus *ConnectionStatus) SetMobileInternetEnabled(value bool) {
+	setBit(connectionStatus.State1, 4, value)
+}
+
+// GetMobileInternetEnabled returns the wifi enabled status
+func (connectionStatus *ConnectionStatus) GetMobileInternetEnabled() bool {
+	return getBit(connectionStatus.State1, 4)
 }
 
 // GetRimoteConnected returns the rimote connected status

@@ -22,6 +22,7 @@ type EthernetMessage struct {
 	Eth0               Adapter
 	Eth1               Adapter
 	Wifi0              Adapter
+	Ppp0               Adapter
 	EthernetConfigured bool
 }
 
@@ -34,6 +35,7 @@ func (*Monitor) run(ctx context.Context, ethernetMessageChannel chan EthernetMes
 	eth0 := &Adapter{Name: "eth0"}
 	eth1 := &Adapter{Name: "eth1"}
 	wifi0 := &Adapter{Name: "wifi0"}
+	ppp0 := &Adapter{Name: "ppp0"}
 
 	defaultTimeout := 15 * time.Second
 
@@ -43,16 +45,16 @@ func (*Monitor) run(ctx context.Context, ethernetMessageChannel chan EthernetMes
 		eth0.update()
 		eth1.update()
 		wifi0.update()
+		ppp0.update()
 
 		ethernetMessageChannel <- EthernetMessage{
 			Eth0:               Adapter{Name: eth0.Name, Connected: eth0.Connected},
 			Eth1:               Adapter{Name: eth1.Name, Connected: eth1.Connected},
 			Wifi0:              Adapter{Name: wifi0.Name, Connected: wifi0.Connected},
+			Ppp0:               Adapter{Name: ppp0.Name, Connected: ppp0.Connected},
 			EthernetConfigured: eth0.Configured || eth1.Configured}
 
 		time.Sleep(defaultTimeout)
-
-		ctx.Done()
 	}
 }
 
