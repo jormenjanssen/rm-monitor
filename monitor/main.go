@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
+	"io/ioutil"
 	"time"
 )
 
@@ -13,8 +16,13 @@ func main() {
 
 	// Check if we're allowed to stdout.
 	if err != nil {
-		panic(err) // Check for error
+		panic(err)
 	}
+
+	go func() {
+		http.ListenAndServe("localhost:6060", nil)
+		log.Debug("Start pprof @ localhost:6060")
+	}()
 
 	// Create a context this allows to shutdown gracefully.
 	ctx := CreateApplicationContext(log)
@@ -40,13 +48,13 @@ func main() {
 	// Run our message loop blocking ...
 	messageloop(ctx, log, monitorChannel)
 
-	log.Info("Monitor is going to shutdown ...")
+	log.Info("Monitor is going to shutdown in 10 seconds ...")
+	time.Sleep(10 * time.Second)
 }
 
 func executeWithLogger(logger *Logger, context string, fn func() error) {
 
 	err := fn()
-
 	if err != nil {
 		logger.WarningF("%v %v", context, err)
 	}
@@ -57,6 +65,8 @@ func initDefaults(msg *Message) {
 	msg.GeneralStatus().SetHardwareStatus(true)
 	msg.GeneralStatus().SetSoftwareStatus(true)
 	msg.GeneralStatus().SetVccStatus(true)
+
+	msg.HardwareStatus().SetNandStatus(true)
 }
 
 func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChannel) {
@@ -80,25 +90,34 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 			executeWithLogger(logger, "led:rimote", func() error {
 				return SetRimoteLed(rimoteMessage.IsConnected)
 			})
-		case ethernetmessage := <-monitorChannel.EthernetMessageChannel:
-			msg.ConnectionStatus().SetEth0Status(ethernetmessage.Eth0.Connected)
-			msg.ConnectionStatus().SetEth1Status(ethernetmessage.Eth1.Connected)
-			msg.ConnectionStatus().SetEthernetConfigurationStatus(ethernetmessage.EthernetConfigured)
-			msg.ConnectionStatus().SetWifiEnabled(ethernetmessage.Wifi0.Connected)
-			msg.ConnectionStatus().SetMobileInternetEnabled(ethernetmessage.Ppp0.Connected)
+		case ethernetMessage := <-monitorChannel.EthernetMessageChannel:
+			msg.ConnectionStatus().SetEth0Status(ethernetMessage.Eth0.Connected)
+			msg.ConnectionStatus().SetEth1Status(ethernetMessage.Eth1.Connected)
+			msg.ConnectionStatus().SetEthernetConfigurationStatus(ethernetMessage.EthernetConfigured)
+			msg.ConnectionStatus().SetWifiEnabled(ethernetMessage.Wifi0.Connected)
+			setConnectionLeds(logger, ethernetMessage)
+		case modemMessage := <-monitorChannel.ModemStatusMessageChannel:
+			msg.ConnectionStatus().SetMobileInternetEnabled(modemMessage.ModemAvailable)
 
-			// Set the led states
-			setConnectionLeds(logger, ethernetmessage)
-
+			setModemLed(logger, modemMessage)
 		default:
 			time.Sleep(timeout)
 
-			err := SendMessage("127.0.0.1:9876", msg.Data)
+			err := SendMessage(msg.Data)
 			if err != nil {
 				logger.Errorf("could not send status message: %v", err)
 			}
 		}
 	}
+}
+
+func setModemLed(logger *Logger, modemStatusMessage ModemStatusMessage) {
+	executeWithLogger(logger, "led:broadband", func() error {
+		if modemStatusMessage.ModemAvailable {
+			return SetBroadbandLed(GoodSignal)
+		}
+		return SetBroadbandLed(NoSignal)
+	})
 }
 
 func setConnectionLeds(logger *Logger, ethernetmessage EthernetMessage) {
@@ -111,14 +130,6 @@ func setConnectionLeds(logger *Logger, ethernetmessage EthernetMessage) {
 		return SetWifiLed(NoSignal)
 	})
 
-	executeWithLogger(logger, "led:broadband", func() error {
-		if ethernetmessage.Ppp0.Connected {
-			return SetBroadbandLed(GoodSignal)
-		}
-
-		return SetBroadbandLed(NoSignal)
-	})
-
 	executeWithLogger(logger, "led:eth0", func() error {
 		return SetEth0Led(ethernetmessage.Eth0.Configured, ethernetmessage.Eth0.Connected)
 	})
@@ -126,4 +137,10 @@ func setConnectionLeds(logger *Logger, ethernetmessage EthernetMessage) {
 	executeWithLogger(logger, "led:eth1", func() error {
 		return SetEth1Led(ethernetmessage.Eth1.Configured, ethernetmessage.Eth1.Connected)
 	})
+}
+
+func writeModemInfo(modemStatusMessage ModemStatusMessage) error {
+
+	data := asci
+	ioutil.WriteFile("", , os.O_RDWR)
 }

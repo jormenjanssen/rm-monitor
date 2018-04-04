@@ -5,25 +5,67 @@ import (
 	"net"
 )
 
+var udpConnection = CreateUDPConnection()
+
+// UDPConnection struct
+type UDPConnection struct {
+	Address    *net.UDPAddr
+	connection net.Conn
+}
+
+// CreateUDPConnection creates udp connection
+func CreateUDPConnection() *UDPConnection {
+
+	addr, _ := net.ResolveUDPAddr("udp", "127.0.0.1:9876")
+	return &UDPConnection{Address: addr}
+}
+
+// Execute UDP call
+func (udpConnection *UDPConnection) Execute(f func(*net.UDPConn) error) error {
+
+	if udpConnection.connection == nil {
+		udp, err := net.DialUDP("udp", nil, udpConnection.Address)
+		if err == nil {
+			udpConnection.connection = udp
+			err = f(udp)
+			if err != nil {
+				udpConnection.connection.Close()
+				udpConnection.connection = nil
+			}
+
+			return err
+		}
+
+		return err
+	}
+
+	udp := udpConnection.connection
+	udpConn, ok := udp.(*net.UDPConn)
+
+	if ok {
+		err := f(udpConn)
+		if err != nil {
+			udpConnection.connection.Close()
+			udpConnection.connection = nil
+		} else {
+			return nil
+		}
+	}
+
+	udpConnection.connection = nil
+	return errors.New("Invallid cast")
+}
+
 // SendMessage send an udp message
-func SendMessage(address string, message [8]byte) error {
+func SendMessage(message [8]byte) error {
 
-	addr, err := net.ResolveUDPAddr("udp", address)
-	if err != nil {
+	return udpConnection.Execute(func(udp *net.UDPConn) error {
+
+		n, err := udp.Write(message[:])
+		if n != 8 && err == nil {
+			return errors.New("Invallid data length")
+		}
+
 		return err
-	}
-
-	c, err := net.DialUDP("udp", nil, addr)
-
-	if err != nil {
-		return err
-	}
-
-	n, err := c.Write(message[:])
-
-	if n != 8 && err == nil {
-		return errors.New("Invallid data length")
-	}
-
-	return err
+	})
 }

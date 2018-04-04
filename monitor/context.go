@@ -29,6 +29,10 @@ func CreateApplicationContext(logger *Logger) context.Context {
 	// all signals will be sent to the channel.
 	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM)
 
+	if IsDebugMode() {
+		logger.Debugf("Signal handler installed listening for SIGINT | SIGTERM")
+	}
+
 	ctx := context.TODO()
 	ctx, cancel := context.WithCancel(ctx)
 

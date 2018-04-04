@@ -16,6 +16,11 @@ type GeneralStatus struct {
 	State1 *byte
 }
 
+// HardwareStatus structure
+type HardwareStatus struct {
+	State1 *byte
+}
+
 // RimoteStatus structure
 type RimoteStatus struct {
 	State1 *byte
@@ -25,6 +30,11 @@ type RimoteStatus struct {
 // GeneralStatus returns the general status message
 func (message *Message) GeneralStatus() *GeneralStatus {
 	return &GeneralStatus{State1: &message.Data[0]}
+}
+
+// HardwareStatus returns the hardware status message
+func (message *Message) HardwareStatus() *HardwareStatus {
+	return &HardwareStatus{State1: &message.Data[1]}
 }
 
 // ConnectionStatus returns the general status message
@@ -65,6 +75,16 @@ func (generalStatus *GeneralStatus) SetSoftwareStatus(value bool) {
 // GetSoftwareStatus get the software status
 func (generalStatus *GeneralStatus) GetSoftwareStatus() bool {
 	return getBit(generalStatus.State1, 1)
+}
+
+// SetNandStatus sets the nand status
+func (hardwareStatus *HardwareStatus) SetNandStatus(value bool) {
+	setBit(hardwareStatus.State1, 3, value)
+}
+
+// GetNandStatus get the software status
+func (hardwareStatus *HardwareStatus) GetNandStatus() bool {
+	return getBit(hardwareStatus.State1, 3)
 }
 
 // SetEth0Status sets the connection status of eth0
