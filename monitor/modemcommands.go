@@ -145,6 +145,10 @@ func TryHandleAtCommandError(logger *Logger, cmd string, err error, atErrorHandl
 			return nil
 		}
 
+		if IsDebugMode() {
+			logger.Debugf("Ignoring unkown error: %v in command: %v", err.Error(), cmd)
+		}
+
 		return err
 	}
 	// fallback
