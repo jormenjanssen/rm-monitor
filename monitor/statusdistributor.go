@@ -21,7 +21,7 @@ func CreateUDPConnection() *UDPConnection {
 }
 
 // Execute UDP call
-func (udpConnection *UDPConnection) Execute(f func(*net.UDPConn) error) error {
+func (udpConnection *UDPConnection) Execute(logger *Logger, f func(net.Conn) error) error {
 
 	if udpConnection.connection == nil {
 		udp, err := net.DialUDP("udp", nil, udpConnection.Address)
@@ -40,16 +40,16 @@ func (udpConnection *UDPConnection) Execute(f func(*net.UDPConn) error) error {
 	}
 
 	udp := udpConnection.connection
-	udpConn, ok := udp.(*net.UDPConn)
 
-	if ok {
-		err := f(udpConn)
-		if err != nil {
-			udpConnection.connection.Close()
-			udpConnection.connection = nil
-		} else {
-			return nil
-		}
+	err := f(udp)
+	if err != nil {
+		udpConnection.connection.Close()
+		udpConnection.connection = nil
+
+		logger.DebugF("Cannot send distributed status message: %v", err)
+
+	} else {
+		return nil
 	}
 
 	udpConnection.connection = nil
@@ -57,9 +57,9 @@ func (udpConnection *UDPConnection) Execute(f func(*net.UDPConn) error) error {
 }
 
 // SendMessage send an udp message
-func SendMessage(message [8]byte) error {
+func SendMessage(logger *Logger, message [8]byte) error {
 
-	return udpConnection.Execute(func(udp *net.UDPConn) error {
+	return udpConnection.Execute(logger, func(udp net.Conn) error {
 
 		n, err := udp.Write(message[:])
 		if n != 8 && err == nil {

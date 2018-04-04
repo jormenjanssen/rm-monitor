@@ -142,7 +142,7 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 		default:
 			time.Sleep(timeout)
 
-			err := SendMessage(msg.Data)
+			err := SendMessage(logger, msg.Data)
 			if err != nil {
 				logger.Errorf("could not send status message: %v", err)
 			}
