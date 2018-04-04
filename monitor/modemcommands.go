@@ -386,7 +386,7 @@ func ATCCID(parentCtx context.Context, handler *AtCommandHandler) (ccid string, 
 			})}
 
 		err = command.Execute(handler)
-		return res, err
+		return ccid, err
 	})
 
 	result, ok := res.(string)
