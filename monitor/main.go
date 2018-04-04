@@ -1,11 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
-	"net/http"
-	_ "net/http/pprof"
-	"os"
+	"fmt"
 	"io/ioutil"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -19,10 +20,12 @@ func main() {
 		panic(err)
 	}
 
-	go func() {
+	/*go func() {
 		http.ListenAndServe("localhost:6060", nil)
 		log.Debug("Start pprof @ localhost:6060")
 	}()
+
+	*/
 
 	// Create a context this allows to shutdown gracefully.
 	ctx := CreateApplicationContext(log)
@@ -69,6 +72,29 @@ func initDefaults(msg *Message) {
 	msg.HardwareStatus().SetNandStatus(true)
 }
 
+// DeviceFirmwareFilePath The path of the file containing the firmware version info
+const DeviceFirmwareFilePath string = "/etc/mender/artifact_info"
+
+// DeviceRimoteInfoFilePath The path of the file containing the firmware version info
+const DeviceRimoteInfoFilePath string = "/usr/share/Riwo/Rimote/HostInfo.txt"
+
+// GetFirmwareVersion return the firmware version from the Firmware
+func GetFirmwareVersion() (string, error) {
+
+	if !IsTargetDevice() {
+		return "[DEVELOPMENT]", nil
+	}
+
+	databytes, err := ioutil.ReadFile(DeviceFirmwareFilePath)
+	version := strings.Split(string(databytes), "=")[1]
+
+	if err != nil {
+		return "[UNDECTABLE]", err
+	}
+
+	return version, nil
+}
+
 func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChannel) {
 
 	timeout := 1000 * time.Millisecond
@@ -76,6 +102,15 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 
 	// Set some defaults
 	initDefaults(msg)
+
+	firmwareVersion, err := GetFirmwareVersion()
+	if err != nil {
+		logger.WarningF("Cannot detect firmware version")
+	}
+
+	if IsDebugMode() {
+		logger.DebugF("Got the following firmware version information: %v", firmwareVersion)
+	}
 
 	for {
 
@@ -100,6 +135,10 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 			msg.ConnectionStatus().SetMobileInternetEnabled(modemMessage.ModemAvailable)
 
 			setModemLed(logger, modemMessage)
+
+			if modemMessage.WriteModemStatus {
+				WriteRimoteInfo(DeviceRimoteInfoFilePath, firmwareVersion, modemMessage)
+			}
 		default:
 			time.Sleep(timeout)
 
@@ -139,8 +178,19 @@ func setConnectionLeds(logger *Logger, ethernetmessage EthernetMessage) {
 	})
 }
 
-func writeModemInfo(modemStatusMessage ModemStatusMessage) error {
+// WriteRimoteInfo writes HostDeviceInfo file
+func WriteRimoteInfo(path string, firmwareversion string, modemStatusMessage ModemStatusMessage) error {
 
-	data := asci
-	ioutil.WriteFile("", , os.O_RDWR)
+	db := make([]byte, 0)
+	buffer := bytes.NewBuffer(db)
+	fmt.Fprintln(buffer, fmt.Sprintf("firmware-version: %v", firmwareversion))
+	fmt.Fprintln(buffer, fmt.Sprintf("modem-available: %v", modemStatusMessage.ModemAvailable))
+
+	if modemStatusMessage.SimCardAvailable {
+		fmt.Fprint(buffer, fmt.Sprintf("sim-number: %v", modemStatusMessage.SimUccid))
+	}
+
+	data := buffer.Bytes()
+	dataBytes := []byte(data)
+	return ioutil.WriteFile(path, dataBytes, 0666)
 }

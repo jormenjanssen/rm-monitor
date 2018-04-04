@@ -15,5 +15,4 @@ func TestGetCcidFromCcidLine(t *testing.T) {
 	if str != "8931087616027213997F" {
 		t.Errorf("Exected output: 8931087616027213997F got: %v", str)
 	}
-
 }
