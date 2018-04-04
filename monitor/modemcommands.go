@@ -129,6 +129,10 @@ func TryHandleAtCommandError(logger *Logger, cmd string, err error, atErrorHandl
 		return nil
 	}
 
+	if IsDebugMode() {
+		logger.Debugf("Error: %v in command: %v", err.Error(), cmd)
+	}
+
 	// Check if we can cast to an error from which we can recover
 	if _, ok := err.(*SimError); ok {
 
@@ -143,10 +147,6 @@ func TryHandleAtCommandError(logger *Logger, cmd string, err error, atErrorHandl
 			atErrorHandler()
 
 			return nil
-		}
-
-		if IsDebugMode() {
-			logger.Debugf("Ignoring unkown error: %v in command: %v", err.Error(), cmd)
 		}
 
 		return err
