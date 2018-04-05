@@ -58,15 +58,20 @@ func HandleHostInfo(ctx context.Context, logger *Logger, hostInfoInputChannel <-
 		firmwareVersion, _ := GetFirmwareVersion()
 		current := &HostInfo{FirmwareVersion: firmwareVersion}
 
-		// Initial case where we want to 45 seconds before giving up and writing the result anyway without sim-info
+		// Initial select case where we want to wait max 45 seconds before giving up and writing the result anyway without sim-info
 		select {
+		// Context exit requested
 		case <-ctx.Done():
 			return
+		// We got hostinfo before the timeout
+		case hostmsg := <-hostInfoInputChannel:
+			writeInternal(logger, current, hostmsg, false)
+		// We got no hostinfo before the timeout force the current one with only firmware information
 		case <-time.After(45 * time.Second):
 			writeInternal(logger, current, emptyInfo, true)
 		}
 
-		// Further case where we only want to write if we got a new sim-id
+		// Further case where we only want to write, if we got a new sim-id
 		for {
 			select {
 			case <-ctx.Done():
@@ -86,7 +91,7 @@ func GetFirmwareVersion() (string, error) {
 	}
 
 	databytes, err := ioutil.ReadFile(DeviceFirmwareFilePath)
-	version := strings.Split(string(databytes), "=")[1]
+	version := strings.TrimSpace(strings.Split(string(databytes), "=")[1])
 
 	if err != nil {
 		return "[UNDECTABLE]", err
@@ -101,16 +106,12 @@ func writeInternal(logger *Logger, currentInfo *HostInfo, newInfo HostInfo, forc
 	infoUpdated := currentInfo.UpdateModemInfo(newInfo)
 
 	// Write debug/verbose logging.
-	if IsDebugMode() {
+	if infoUpdated && IsDebugMode() {
 		writeHostInfoToLogger(logger, currentInfo)
-
-		if infoUpdated {
-			logger.Debug("The hostinfo is updated")
-		}
 	}
 
 	// Check if we need to write our new host info to the system.
-	if forced || checkWrite(currentInfo) {
+	if forced || (infoUpdated && checkWrite(currentInfo)) {
 
 		if IsDebugMode() {
 			logger.DebugF("Writing rimote connection info [forced: %v]", forced)
@@ -126,8 +127,6 @@ func writeInternal(logger *Logger, currentInfo *HostInfo, newInfo HostInfo, forc
 }
 
 func writeHostInfoToLogger(logger *Logger, hostInfo *HostInfo) {
-
-	logger.Debug("Writing HostmodemInfo")
 	logger.DebugF("HostmodemInfo[FirmwareVersion]: %v", hostInfo.FirmwareVersion)
 	logger.DebugF("HostmodemInfo[ModemEnabled]: %v", hostInfo.ModemEnabled)
 	logger.DebugF("HostmodemInfo[SimID]: %v", hostInfo.SimID)
@@ -146,7 +145,7 @@ func WriteRimoteInfo(path string, hostInfo *HostInfo) error {
 	fmt.Fprintln(buffer, fmt.Sprintf("modem-available: %v", hostInfo.ModemEnabled))
 
 	if hostInfo.SimID != "" {
-		fmt.Fprint(buffer, fmt.Sprintf("sim-number: %v", hostInfo.SimID))
+		fmt.Fprintln(buffer, fmt.Sprintf("sim-number: %v", hostInfo.SimID))
 	}
 
 	data := buffer.Bytes()
