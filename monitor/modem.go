@@ -86,25 +86,27 @@ func handleModem(ctx context.Context, logger *Logger, modemStatusMessageChannel 
 		}
 	}()
 
-	err = handleModemData(ctx, port, commandTimeout, logger, modemStatusMessageChannel)
+	initialConnected, err := handleModemData(ctx, port, commandTimeout, logger, modemStatusMessageChannel)
+
+	if initialConnected {
+		modemStatusMessageChannel <- ModemStatusMessage{ModemAvailable: true}
+	}
+
 	return err
 }
 
-func handleModemData(ctx context.Context, port *Port, commandTimeout time.Duration, logger *Logger, modemStatusMessageChannel chan ModemStatusMessage) error {
-
-	// Report we have modem
-	modemStatusMessageChannel <- ModemStatusMessage{ModemAvailable: true}
+func handleModemData(ctx context.Context, port *Port, commandTimeout time.Duration, logger *Logger, modemStatusMessageChannel chan ModemStatusMessage) (bool, error) {
 
 	for {
 		select {
 		// Check if we're closed
 		case <-ctx.Done():
-			return nil
+			return false, nil
 
 		case <-time.After(commandTimeout):
-			err := handleAT(ctx, port, commandTimeout, logger, modemStatusMessageChannel)
+			initialConnected, err := handleAT(ctx, port, commandTimeout, logger, modemStatusMessageChannel)
 			if err != nil {
-				return err
+				return initialConnected, err
 			}
 
 		}

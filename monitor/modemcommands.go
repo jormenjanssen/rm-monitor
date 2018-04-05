@@ -24,7 +24,7 @@ func ATCreateCommandContext(parentCtx context.Context) (ctx context.Context, can
 	return ctx, cancel
 }
 
-func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Logger, modemStatusMessageChannel chan ModemStatusMessage) error {
+func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Logger, modemStatusMessageChannel chan ModemStatusMessage) (bool, error) {
 
 	// Global initing for this session
 	timeoutReader := NewReader(port, timeout)
@@ -34,6 +34,7 @@ func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Lo
 		writer: port}
 
 	errorModeTextEnabled := false
+	initialConnected := true
 
 	for {
 		select {
@@ -41,7 +42,7 @@ func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Lo
 			if IsDebugMode() {
 				logger.Debug("Cancelled modem command handling")
 			}
-			return nil
+			return false, nil
 		default:
 			modemAvailable := true
 			simpinOk := true
@@ -57,8 +58,8 @@ func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Lo
 			// First try simple at command.
 			err := AT(ctx, handler)
 
-			if err := TryHandleAtCommandError(logger, "AT", err, func() { modemAvailable = false }); err != nil {
-				return err
+			if err := TryHandleAtCommandError(logger, "AT", err, func() { modemAvailable = false; initialConnected = false }); err != nil {
+				return initialConnected, err
 			}
 
 			// Disable AT echo
@@ -78,14 +79,14 @@ func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Lo
 			err = ATCPIN(ctx, handler)
 
 			if err := TryHandleAtCommandError(logger, "AT+CPIN?", err, func() { simpinOk = false }); err != nil {
-				return err
+				return initialConnected, err
 			}
 
 			// Check signal quality
 			csqRes, err := ATCSQ(ctx, handler)
 
 			if err := TryHandleAtCommandError(logger, "AT+CSQ", err, func() { signal = NoSignal }); err != nil {
-				return err
+				return initialConnected, err
 			}
 
 			// Copy the result values back
@@ -98,7 +99,7 @@ func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Lo
 			str, err := ATCCID(ctx, handler)
 
 			if err := TryHandleAtCommandError(logger, "AT+CCID", err, func() { gotSimID = true }); err != nil {
-				return err
+				return initialConnected, err
 			}
 
 			// todo: remove
