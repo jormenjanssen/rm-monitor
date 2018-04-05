@@ -16,7 +16,6 @@ type ModemStatusMessage struct {
 	SimpinOk         bool
 	SimCardAvailable bool
 	SignalStrength   SignalStrength
-	WriteModemStatus bool
 }
 
 // WatchModem func

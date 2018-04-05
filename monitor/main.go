@@ -1,12 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"fmt"
-	"io/ioutil"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -47,6 +43,7 @@ func main() {
 	MonitorRimoteConnectionStatus(ctx, log, monitorChannel.RimoteMessageChannel)
 	NewEthernetMonitor(ctx, monitorChannel.EthernetMessageChannel)
 	WatchModem(ctx, log, monitorChannel.ModemStatusMessageChannel)
+	HandleHostInfo(ctx, log, monitorChannel.InfoMessageChannel)
 
 	// Run our message loop blocking ...
 	messageloop(ctx, log, monitorChannel)
@@ -70,29 +67,6 @@ func initDefaults(msg *Message) {
 	msg.GeneralStatus().SetVccStatus(true)
 
 	msg.HardwareStatus().SetNandStatus(true)
-}
-
-// DeviceFirmwareFilePath The path of the file containing the firmware version info
-const DeviceFirmwareFilePath string = "/etc/mender/artifact_info"
-
-// DeviceRimoteInfoFilePath The path of the file containing the firmware version info
-const DeviceRimoteInfoFilePath string = "/usr/share/Riwo/Rimote/HostInfo.txt"
-
-// GetFirmwareVersion return the firmware version from the Firmware
-func GetFirmwareVersion() (string, error) {
-
-	if !IsTargetDevice() {
-		return "[DEVELOPMENT]", nil
-	}
-
-	databytes, err := ioutil.ReadFile(DeviceFirmwareFilePath)
-	version := strings.Split(string(databytes), "=")[1]
-
-	if err != nil {
-		return "[UNDECTABLE]", err
-	}
-
-	return version, nil
 }
 
 func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChannel) {
@@ -133,12 +107,13 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 			setConnectionLeds(logger, ethernetMessage)
 		case modemMessage := <-monitorChannel.ModemStatusMessageChannel:
 			msg.ConnectionStatus().SetMobileInternetEnabled(modemMessage.ModemAvailable)
-
 			setModemLed(logger, modemMessage)
 
-			if modemMessage.WriteModemStatus {
-				WriteRimoteInfo(DeviceRimoteInfoFilePath, firmwareVersion, modemMessage)
-			}
+			// Report status back
+			monitorChannel.InfoMessageChannel <- HostInfo{
+				ModemEnabled: modemMessage.ModemAvailable,
+				SimID:        modemMessage.SimUccid}
+
 		default:
 			time.Sleep(timeout)
 
@@ -176,21 +151,4 @@ func setConnectionLeds(logger *Logger, ethernetmessage EthernetMessage) {
 	executeWithLogger(logger, "led:eth1", func() error {
 		return SetEth1Led(ethernetmessage.Eth1.Configured, ethernetmessage.Eth1.Connected)
 	})
-}
-
-// WriteRimoteInfo writes HostDeviceInfo file
-func WriteRimoteInfo(path string, firmwareversion string, modemStatusMessage ModemStatusMessage) error {
-
-	db := make([]byte, 0)
-	buffer := bytes.NewBuffer(db)
-	fmt.Fprintln(buffer, fmt.Sprintf("firmware-version: %v", firmwareversion))
-	fmt.Fprintln(buffer, fmt.Sprintf("modem-available: %v", modemStatusMessage.ModemAvailable))
-
-	if modemStatusMessage.SimCardAvailable {
-		fmt.Fprint(buffer, fmt.Sprintf("sim-number: %v", modemStatusMessage.SimUccid))
-	}
-
-	data := buffer.Bytes()
-	dataBytes := []byte(data)
-	return ioutil.WriteFile(path, dataBytes, 0666)
 }

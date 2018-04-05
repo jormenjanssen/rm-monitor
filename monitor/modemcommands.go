@@ -34,7 +34,6 @@ func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Lo
 		writer: port}
 
 	errorModeTextEnabled := false
-	modemInfoWritten := false
 
 	for {
 		select {
@@ -44,7 +43,6 @@ func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Lo
 			}
 			return nil
 		default:
-			writeInfo := false
 			modemAvailable := true
 			simpinOk := true
 			gotSimID := true
@@ -103,21 +101,15 @@ func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Lo
 				return err
 			}
 
-			// Write the info only once per modem/com session
-			if err != nil && !modemInfoWritten {
-				modemInfoWritten = true
-				writeInfo = true
-			}
-
 			// todo: remove
 			logger.Debugf("AT+CSQ: scq: %v ber: %v simpin: %v", csq, ber, simpinOk)
 
 			modemStatusMessageChannel <- ModemStatusMessage{
-				ModemAvailable:   modemAvailable,
-				SignalStrength:   signal,
-				SimpinOk:         simpinOk,
-				SimUccid:         str,
-				WriteModemStatus: writeInfo}
+				ModemAvailable: modemAvailable,
+				SignalStrength: signal,
+				SimpinOk:       simpinOk,
+				SimUccid:       str,
+			}
 		}
 	}
 }
