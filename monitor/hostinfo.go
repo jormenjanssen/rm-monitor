@@ -208,8 +208,8 @@ func WriteRimoteInfo(path string, hostInfo *HostInfo) error {
 // DeviceIsUsingFactoryConfig return true if this device is using the factory config
 func DeviceIsUsingFactoryConfig() bool {
 
-	// Return false in debug mode.
-	if IsTargetDevice() {
+	// Return false in debug mode on device.
+	if !IsTargetDevice() {
 		return false
 	}
 
