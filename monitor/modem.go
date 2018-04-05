@@ -116,25 +116,6 @@ func handleModemData(ctx context.Context, port *Port, commandTimeout time.Durati
 
 const atSeperator = '\r'
 
-// RunModemCommands runs one or more modem commands with retry support
-func RunModemCommands(commands []func() error, retryCount int) error {
-
-	for _, command := range commands {
-		for i := 0; i < retryCount; i++ {
-
-			err := command()
-			if err != nil && i == retryCount {
-				return err
-			}
-
-			if err == nil {
-				break
-			}
-		}
-	}
-	return nil
-}
-
 func getModemPort() string {
 
 	if IsTargetDevice() {

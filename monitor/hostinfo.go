@@ -209,7 +209,7 @@ func WriteRimoteInfo(path string, hostInfo *HostInfo) error {
 func DeviceIsUsingFactoryConfig() bool {
 
 	// Return false in debug mode.
-	if IsDebugMode() {
+	if IsTargetDevice() {
 		return false
 	}
 
