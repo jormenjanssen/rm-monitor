@@ -8,9 +8,10 @@ import (
 
 func TestFullWriteRimoteInfo(t *testing.T) {
 
-	hostinfo := &HostInfo{FirmwareVersion: "rm-v1.6-prod-20180118-74",
-		ModemEnabled: true,
-		SimID:        "8931087616027213997F"}
+	hostinfo := &HostInfo{
+		FirmwareVersion: "rm-v1.6-prod-20180118-74",
+		ModemEnabled:    true,
+		SimID:           "8931087616027213997F"}
 
 	err := WriteRimoteInfo("C:\\test\\HostInfo.txt", hostinfo)
 

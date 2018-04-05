@@ -3,8 +3,11 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha1"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 )
@@ -14,6 +17,12 @@ const DeviceFirmwareFilePath string = "/etc/mender/artifact_info"
 
 // DeviceRimoteInfoFilePath The path of the file containing the firmware version info
 const DeviceRimoteInfoFilePath string = "/usr/share/Riwo/Rimote/HostInfo.txt"
+
+// SystemConfigurationFilePath The path of the file containing the system parameters
+const SystemConfigurationFilePath string = "/data/system/configuration.xml"
+
+// FactorySystemConfigurationFilePath The path of the file containing the system parameters (factory-default)
+const FactorySystemConfigurationFilePath string = "/usr/local/rimote/riwo.rimote-management/app/factory.xml"
 
 // HostInfo structure
 type HostInfo struct {
@@ -39,10 +48,14 @@ func (hostInfo *HostInfo) UpdateModemInfo(newInfo HostInfo) bool {
 		updated = true
 	}
 
-	// Update our sim id only if we got a vallid one which is not equal to our current
+	// Update our sim-id, if we got a vallid one which is not equal to our current
 	if newInfo.SimID != "" && hostInfo.SimID != newInfo.SimID {
-		hostInfo.SimID = newInfo.SimID
-		updated = true
+
+		// Only update our sim-id, if we're not using the system factory config.
+		if !DeviceIsUsingFactoryConfig() {
+			hostInfo.SimID = newInfo.SimID
+			updated = true
+		}
 	}
 
 	return updated
@@ -53,6 +66,9 @@ func HandleHostInfo(ctx context.Context, logger *Logger, hostInfoInputChannel <-
 
 	// Handle inside go routine
 	go func() {
+
+		// Run some tests
+		runUpfronConfigurationChecks(logger)
 
 		emptyInfo := HostInfo{}
 		firmwareVersion, _ := GetFirmwareVersion()
@@ -81,6 +97,42 @@ func HandleHostInfo(ctx context.Context, logger *Logger, hostInfoInputChannel <-
 			}
 		}
 	}()
+}
+
+func runUpfronConfigurationChecks(logger *Logger) {
+
+	if err := FactoryFilePresent(); err != nil {
+		logger.WarningF("The factory system configuration file is not present error: %v", err)
+	}
+
+	if err := SystemConfigFilePresent(); err != nil {
+		logger.WarningF("The system configuration file is not present error: %v", err)
+	}
+
+	factorySha1 := "undected"
+	configFileSha1 := "undected"
+
+	var err error
+
+	if factorySha1, err = GetSha1SumFromFile(FactorySystemConfigurationFilePath); err != nil {
+		logger.WarningF("Cannot determina sha1 for factory system config file: %v", err)
+		return
+	}
+
+	if configFileSha1, err = GetSha1SumFromFile(SystemConfigurationFilePath); err != nil {
+		logger.WarningF("Cannot determina sha1 for system config file: %v", err)
+		return
+	}
+
+	matching := factorySha1 == configFileSha1
+
+	if IsDebugMode() {
+		logger.DebugF("Running SHA1 comparison between Factory[%v] and SystemConfig[%v] Matching: %v", factorySha1, configFileSha1, matching)
+	}
+
+	if matching {
+		logger.InfoF("The system is running with factory default configuration. (Ignoring sim-id)")
+	}
 }
 
 // GetFirmwareVersion return the firmware version from the Firmware
@@ -114,7 +166,7 @@ func writeInternal(logger *Logger, currentInfo *HostInfo, newInfo HostInfo, forc
 	if forced || (infoUpdated && checkWrite(currentInfo)) {
 
 		if IsDebugMode() {
-			logger.DebugF("Writing rimote connection info [forced: %v]", forced)
+			logger.DebugF("Writing rimote connection info [forced: %v] [factory-config: %v]", forced, DeviceIsUsingFactoryConfig())
 		}
 
 		// Perform the actual write
@@ -151,4 +203,64 @@ func WriteRimoteInfo(path string, hostInfo *HostInfo) error {
 	data := buffer.Bytes()
 	dataBytes := []byte(data)
 	return ioutil.WriteFile(path, dataBytes, 0666)
+}
+
+// DeviceIsUsingFactoryConfig return true if this device is using the factory config
+func DeviceIsUsingFactoryConfig() bool {
+
+	// Return false in debug mode.
+	if IsDebugMode() {
+		return false
+	}
+
+	// Without a factory file we can't do comparison
+	if FactoryFilePresent() != nil {
+		return false
+	}
+
+	// Without a system configuration consider our self valid
+	if SystemConfigFilePresent() != nil {
+		return true
+	}
+
+	factorySha1, _ := GetSha1SumFromFile(FactorySystemConfigurationFilePath)
+	configFileSha1, _ := GetSha1SumFromFile(SystemConfigurationFilePath)
+
+	// Run sha1 comparison
+	if factorySha1 == configFileSha1 {
+		return true
+	}
+
+	return false
+}
+
+// FactoryFilePresent check if the factory file is present and return nil when everyting works like expected
+func FactoryFilePresent() error {
+	_, err := os.Stat(FactorySystemConfigurationFilePath)
+	return err
+}
+
+// SystemConfigFilePresent check if the factory file is present and return nil when everyting works like expected
+func SystemConfigFilePresent() error {
+	_, err := os.Stat(SystemConfigurationFilePath)
+	return err
+}
+
+// GetSha1SumFromFile return sha1 from path
+func GetSha1SumFromFile(path string) (string, error) {
+
+	f, err := os.Open(path)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer f.Close()
+
+	h := sha1.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }

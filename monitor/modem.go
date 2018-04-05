@@ -88,6 +88,7 @@ func handleModem(ctx context.Context, logger *Logger, modemStatusMessageChannel 
 
 	initialConnected, err := handleModemData(ctx, port, commandTimeout, logger, modemStatusMessageChannel)
 
+	// Report that we have a modem atleast.
 	if initialConnected {
 		modemStatusMessageChannel <- ModemStatusMessage{ModemAvailable: true}
 	}
