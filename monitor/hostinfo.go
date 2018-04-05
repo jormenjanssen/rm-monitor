@@ -127,11 +127,11 @@ func runUpfronConfigurationChecks(logger *Logger) {
 	matching := factorySha1 == configFileSha1
 
 	if IsDebugMode() {
-		logger.DebugF("Running SHA1 comparison between Factory[%v] and SystemConfig[%v] Matching: %v", factorySha1, configFileSha1, matching)
+		logger.DebugF("Running SHA1 comparison between factory[%v] and systemconfig[%v] matching: %v", factorySha1, configFileSha1, matching)
 	}
 
 	if matching {
-		logger.InfoF("The system is running with factory default configuration. (Ignoring sim-id)")
+		logger.InfoF("The system is running with factory default configuration. (ignoring sim-id)")
 	}
 }
 
