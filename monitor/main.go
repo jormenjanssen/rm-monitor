@@ -65,7 +65,6 @@ func initDefaults(msg *Message) {
 	msg.GeneralStatus().SetHardwareStatus(true)
 	msg.GeneralStatus().SetSoftwareStatus(true)
 	msg.GeneralStatus().SetVccStatus(true)
-
 	msg.HardwareStatus().SetNandStatus(true)
 }
 
@@ -95,6 +94,9 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 		case rimoteMessage := <-monitorChannel.RimoteMessageChannel:
 			msg.RimoteStatus().SetRimoteGUIDPresent(rimoteMessage.HasHardwareID)
 			msg.RimoteStatus().SetRimoteConnected(rimoteMessage.IsConnected)
+			// todo: Fix this in the feature
+			msg.RimoteStatus().SetRimoteSSLOk(true)
+			msg.RimoteStatus().SetRimoteConfOk(true)
 
 			executeWithLogger(logger, "led:rimote", func() error {
 				return SetRimoteLed(rimoteMessage.IsConnected)
@@ -107,6 +109,9 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 			setConnectionLeds(logger, ethernetMessage)
 		case modemMessage := <-monitorChannel.ModemStatusMessageChannel:
 			msg.ConnectionStatus().SetMobileInternetEnabled(modemMessage.ModemAvailable)
+			msg.ConnectionStatus().SetSimPinOK(modemMessage.SimpinOk)
+			msg.ConnectionStatus().SetModemSignal(modemMessage.SignalStrength)
+
 			setModemLed(logger, modemMessage)
 
 			// Report status back

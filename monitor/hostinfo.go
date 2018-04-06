@@ -165,9 +165,8 @@ func writeInternal(logger *Logger, currentInfo *HostInfo, newInfo HostInfo, forc
 	// Check if we need to write our new host info to the system.
 	if forced || (infoUpdated && checkWrite(currentInfo)) {
 
-		if IsDebugMode() {
-			logger.DebugF("Writing rimote connection info [forced: %v] [factory-config: %v]", forced, DeviceIsUsingFactoryConfig())
-		}
+		// Log that we are writing the rimote status info
+		logger.InfoF("Writing rimote connection info [forced: %v] [factory-config: %v]", forced, DeviceIsUsingFactoryConfig())
 
 		// Perform the actual write
 		err := WriteRimoteInfo(DeviceRimoteInfoFilePath, currentInfo)

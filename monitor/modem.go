@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"time"
 )
 
@@ -18,6 +19,55 @@ type ModemStatusMessage struct {
 	SignalStrength   SignalStrength
 }
 
+// TranslateModemDBM translates dbm, ber into a rawvalue
+func TranslateModemDBM(rawValue int, berValue int) SignalStrength {
+
+	if berValue == 99 {
+		return NoSignal
+	}
+
+	if berValue > 7 {
+		return WeakSignal
+	}
+
+	if rawValue == 0 {
+		return NoSignal
+	}
+
+	if rawValue == 1 {
+		return WeakSignal
+	}
+
+	// 109 - 53 DBM range
+	// 2 - 30 = 28 steps
+	// 109 DBM - 2 DBM/step
+
+	// Good/Excellent treshold: -70DBM (19.5s)
+	// Weak treshold: -100 (5s)
+	// Fair treshold: -86 (11.5s)
+
+	if rawValue > 1 && rawValue < 31 {
+
+		if rawValue <= 5 {
+			return WeakSignal
+		}
+
+		if rawValue <= 12 {
+			return FairSignal
+		}
+
+		if rawValue > 12 {
+			return GoodSignal
+		}
+	}
+
+	if rawValue >= 31 && rawValue < 99 {
+		return GoodSignal
+	}
+
+	return NoSignal
+}
+
 // WatchModem func
 func WatchModem(ctx context.Context, logger *Logger, modemStatusMessageChannel chan ModemStatusMessage) {
 
@@ -32,6 +82,10 @@ func WatchModem(ctx context.Context, logger *Logger, modemStatusMessageChannel c
 				return
 			// Handle modem logic
 			default:
+
+				// Run some checks before trying to connect
+				preFlightModemCheck(ctx, logger)
+
 				// Modem handling
 				err := handleModem(ctx, logger, modemStatusMessageChannel)
 
@@ -51,6 +105,41 @@ func WatchModem(ctx context.Context, logger *Logger, modemStatusMessageChannel c
 			}
 		}
 	}()
+}
+
+func preFlightModemCheck(ctx context.Context, logger *Logger) {
+
+	// Skip when running for testing
+	if !IsTargetDevice() {
+		logger.DebugF("Skipped pre-flight modem check because we are not running on target device")
+		return
+	}
+
+	// Defaults for maximum
+	// We need atleast 45 (9 attempts * 5s) seconds to prevent reporting the status to early
+	maxAttempts := 10
+	sleepDuration := 5 * time.Second
+
+	// Try to do some upfront checks to prevent errors from connecting to early
+	for i := 0; i < maxAttempts; i++ {
+
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			// Return early when we are able to stat the modem.
+			_, err := os.Stat(deviceModemPort)
+			if err != nil {
+				return
+			}
+
+			// Sleep a while
+			time.Sleep(sleepDuration)
+		}
+
+	}
+
+	logger.Warningf("Modem pre-flight check failed after %v attempts", maxAttempts)
 }
 
 func handleModem(ctx context.Context, logger *Logger, modemStatusMessageChannel chan ModemStatusMessage) error {

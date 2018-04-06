@@ -137,6 +137,16 @@ func (connectionStatus *ConnectionStatus) GetMobileInternetEnabled() bool {
 	return getBit(connectionStatus.State1, 4)
 }
 
+// GetSimpinOk returns the sim status
+func (connectionStatus *ConnectionStatus) GetSimpinOk() bool {
+	return getBit(connectionStatus.State1, 5)
+}
+
+// SetSimPinOK sets the sim status
+func (connectionStatus *ConnectionStatus) SetSimPinOK(value bool) {
+	setBit(connectionStatus.State1, 5, value)
+}
+
 // GetRimoteConnected returns the rimote connected status
 func (rimotestatus *RimoteStatus) GetRimoteConnected() bool {
 	return getBit(rimotestatus.State1, 0)
@@ -155,6 +165,55 @@ func (rimotestatus *RimoteStatus) SetRimoteConnected(value bool) {
 // SetRimoteGUIDPresent sets the rimote guid present
 func (rimotestatus *RimoteStatus) SetRimoteGUIDPresent(value bool) {
 	setBit(rimotestatus.State1, 1, value)
+}
+
+// GetRimoteSSLStatus returns the rimote SSL status
+func (rimotestatus *RimoteStatus) GetRimoteSSLStatus() bool {
+	return getBit(rimotestatus.State1, 2)
+}
+
+// SetRimoteSSLOk sets the rimote SSL status
+func (rimotestatus *RimoteStatus) SetRimoteSSLOk(value bool) {
+	setBit(rimotestatus.State1, 2, value)
+}
+
+// GetRimoteConfOk returns the rimote configuration status
+func (rimotestatus *RimoteStatus) GetRimoteConfOk() bool {
+	return getBit(rimotestatus.State1, 3)
+}
+
+// SetRimoteConfOk sets the rimote configuration status
+func (rimotestatus *RimoteStatus) SetRimoteConfOk(value bool) {
+	setBit(rimotestatus.State1, 3, value)
+}
+
+// SetModemSignal sets the modem signal
+func (connectionStatus *ConnectionStatus) SetModemSignal(signalStrength SignalStrength) {
+
+	if signalStrength == NoSignal {
+		setBit(connectionStatus.State1, 1, true)
+		setBit(connectionStatus.State1, 2, true)
+		setBit(connectionStatus.State1, 3, true)
+	}
+
+	if signalStrength == WeakSignal {
+		setBit(connectionStatus.State1, 1, true)
+		setBit(connectionStatus.State1, 2, false)
+		setBit(connectionStatus.State1, 3, false)
+	}
+
+	if signalStrength == FairSignal {
+		setBit(connectionStatus.State1, 1, false)
+		setBit(connectionStatus.State1, 2, true)
+		setBit(connectionStatus.State1, 3, false)
+	}
+
+	if signalStrength == GoodSignal {
+		setBit(connectionStatus.State1, 1, false)
+		setBit(connectionStatus.State1, 2, false)
+		setBit(connectionStatus.State1, 3, true)
+	}
+
 }
 
 func setBit(b *byte, bit uint, value bool) {

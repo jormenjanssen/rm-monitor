@@ -102,8 +102,7 @@ func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Lo
 				return initialConnected, err
 			}
 
-			// todo: remove
-			logger.Debugf("AT+CSQ: scq: %v ber: %v simpin: %v", csq, ber, simpinOk)
+			signal = TranslateModemDBM(csq, ber)
 
 			modemStatusMessageChannel <- ModemStatusMessage{
 				ModemAvailable: modemAvailable,
