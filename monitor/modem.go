@@ -129,7 +129,7 @@ func preFlightModemCheck(ctx context.Context, logger *Logger) {
 		default:
 			// Return early when we are able to stat the modem.
 			_, err := os.Stat(deviceModemPort)
-			if err != nil {
+			if err == nil {
 				return
 			}
 

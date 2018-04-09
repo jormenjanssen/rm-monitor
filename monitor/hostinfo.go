@@ -29,6 +29,7 @@ type HostInfo struct {
 	FirmwareVersion string
 	ModemEnabled    bool
 	SimID           string
+	HasInfo         bool
 }
 
 // ModemInfoPresent checks if modem info is present
@@ -36,10 +37,21 @@ func (hostInfo *HostInfo) ModemInfoPresent() bool {
 	return hostInfo.ModemEnabled || hostInfo.SimID != ""
 }
 
+// UpdateInfoPresent Update the host info
+func (hostInfo *HostInfo) UpdateInfoPresent() bool {
+
+	if !hostInfo.HasInfo {
+		hostInfo.HasInfo = true
+		return hostInfo.HasInfo
+	}
+
+	return false
+}
+
 // UpdateModemInfo updates the modem info and returns true if the modem info is updated
 func (hostInfo *HostInfo) UpdateModemInfo(newInfo HostInfo) bool {
 
-	updated := false
+	updated := hostInfo.UpdateInfoPresent()
 
 	// Update our modem info only if we where previous disabled.
 	// The modem can be temp offline.
@@ -163,7 +175,7 @@ func writeInternal(logger *Logger, currentInfo *HostInfo, newInfo HostInfo, forc
 	}
 
 	// Check if we need to write our new host info to the system.
-	if forced || (infoUpdated && checkWrite(currentInfo)) {
+	if forced || infoUpdated {
 
 		// Log that we are writing the rimote status info
 		logger.InfoF("Writing rimote connection info [forced: %v] [factory-config: %v]", forced, DeviceIsUsingFactoryConfig())
