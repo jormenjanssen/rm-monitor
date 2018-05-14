@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net"
+	"os"
 	"strings"
 	"time"
 )
@@ -81,8 +83,38 @@ func (adapter *Adapter) update() {
 
 	// Check if the connection is up.
 	if strings.Contains(intf.Flags.String(), "up") {
-		adapter.Connected = true
+		adapter.Connected = adapter.checkCarrierState()
 	} else {
 		adapter.Connected = false
+	}
+}
+
+func (adapter *Adapter) checkCarrierState() bool {
+	path := fmt.Sprintf("/sys/class/net/%v/carrier", adapter.Name)
+	file, err := os.OpenFile(path, os.O_RDONLY, 0600)
+
+	if err != nil {
+		return false
+	}
+
+	// Defer file closing
+	defer file.Close()
+
+	buf := make([]byte, 1)
+	_, err = file.Read(buf)
+
+	if err != nil {
+		return false
+	}
+
+	c := buf[0]
+
+	switch c {
+	case '0':
+		return false
+	case '1':
+		return true
+	default:
+		return false
 	}
 }
