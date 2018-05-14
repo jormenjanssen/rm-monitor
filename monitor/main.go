@@ -118,7 +118,6 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 			monitorChannel.InfoMessageChannel <- HostInfo{
 				ModemEnabled: modemMessage.ModemAvailable,
 				SimID:        modemMessage.SimUccid}
-
 		default:
 			time.Sleep(timeout)
 
@@ -132,9 +131,14 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 
 func setModemLed(logger *Logger, modemStatusMessage ModemStatusMessage) {
 	executeWithLogger(logger, "led:broadband", func() error {
-		if modemStatusMessage.ModemAvailable {
+		if modemStatusMessage.DataAvailable {
 			return SetBroadbandLed(GoodSignal)
 		}
+
+		if modemStatusMessage.ModemAvailable {
+			return SetBroadbandLed(NoSignal)
+		}
+
 		return SetBroadbandLed(NoSignal)
 	})
 }

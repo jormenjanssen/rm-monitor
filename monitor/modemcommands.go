@@ -106,6 +106,7 @@ func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Lo
 
 			modemStatusMessageChannel <- ModemStatusMessage{
 				ModemAvailable: modemAvailable,
+				DataAvailable:  simpinOk,
 				SignalStrength: signal,
 				SimpinOk:       simpinOk,
 				SimUccid:       str,

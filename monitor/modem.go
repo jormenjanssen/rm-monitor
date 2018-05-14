@@ -9,8 +9,11 @@ import (
 const deviceModemPort = "/dev/ttyUSB3"
 const debugModemPort = "COM10"
 
+const modemConfigFile = "/etc/wvdial.conf"
+
 // ModemStatusMessage structure
 type ModemStatusMessage struct {
+	ConfigAvailable  bool
 	ModemAvailable   bool
 	DataAvailable    bool
 	SimUccid         string
@@ -72,6 +75,7 @@ func TranslateModemDBM(rawValue int, berValue int) SignalStrength {
 func WatchModem(ctx context.Context, logger *Logger, modemStatusMessageChannel chan ModemStatusMessage) {
 
 	timeout := 30 * time.Second
+	modemConfigAvailable := false
 
 	// Run the watcher in a new go routine.
 	go func() {
@@ -83,28 +87,53 @@ func WatchModem(ctx context.Context, logger *Logger, modemStatusMessageChannel c
 			// Handle modem logic
 			default:
 
-				// Run some checks before trying to connect
-				preFlightModemCheck(ctx, logger)
+				modemConfigAvailable = CheckModemConfigAvailable()
 
-				// Modem handling
-				err := handleModem(ctx, logger, modemStatusMessageChannel)
+				if modemConfigAvailable {
 
-				if err != nil {
-					logger.Errorf("Modem error: %v", err)
-					modemStatusMessageChannel <- ModemStatusMessage{ModemAvailable: false}
+					// Run some checks before trying to connect
+					preFlightModemCheck(ctx, logger)
 
-					if IsDebugMode() {
-						logger.Debugf("Waiting: %v before retrying to connect", timeout)
+					// Modem handling
+					err := handleModem(ctx, logger, modemStatusMessageChannel)
+
+					if err != nil {
+						logger.Errorf("Modem error: %v", err)
+						modemStatusMessageChannel <- ModemStatusMessage{ConfigAvailable: true, ModemAvailable: false}
+
+						if IsDebugMode() {
+							logger.Debugf("Waiting: %v before retrying to connect", timeout)
+						}
+						// Sleep to prevent a mad reconnect loop.
+						time.Sleep(timeout)
+					} else {
+						// We have no errors so, gracefull shutdown ...
+						return
 					}
-					// Sleep to prevent a mad reconnect loop.
-					time.Sleep(timeout)
 				} else {
-					// We have no errors so, gracefull shutdown ...
-					return
+					// Report we only have a config not an actual modem
+					modemStatusMessageChannel <- ModemStatusMessage{ConfigAvailable: false}
+
+					// Sleep a while before retrying.
+					time.Sleep(timeout)
 				}
 			}
 		}
 	}()
+}
+
+// CheckModemConfigAvailable checks if a modem config file is available
+func CheckModemConfigAvailable() bool {
+
+	if !IsTargetDevice() {
+		return true
+	}
+
+	if _, err := os.Stat(modemConfigFile); err == nil {
+		return true
+	}
+
+	return false
 }
 
 func preFlightModemCheck(ctx context.Context, logger *Logger) {
