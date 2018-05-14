@@ -167,6 +167,11 @@ func SignalStrengthToGpio(redSignal ManagerGpio, greenSignal ManagerGpio, blueSi
 		// Blue is always low.
 		b.Low()
 
+		if strength == ErrorSignal {
+			r.High()
+			g.Low()
+		}
+
 		if strength == NoSignal {
 			r.Low()
 			g.Low()
