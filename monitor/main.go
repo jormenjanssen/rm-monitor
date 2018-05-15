@@ -70,13 +70,15 @@ func initDefaults(msg *Message) {
 
 func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChannel) {
 
-	timeout := 1000 * time.Millisecond
+	timeout := 2000 * time.Millisecond
 	msg := NewMessage()
 
 	// Set some defaults
 	initDefaults(msg)
 
+	// Try to detect the firmware version at startup.
 	firmwareVersion, err := GetFirmwareVersion()
+
 	if err != nil {
 		logger.WarningF("Cannot detect firmware version")
 	}
@@ -117,11 +119,14 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 			// Report status back
 			monitorChannel.InfoMessageChannel <- HostInfo{
 				ModemEnabled: modemMessage.ModemAvailable,
-				SimID:        modemMessage.SimUccid}
+				SimID:        modemMessage.SimUccid,
+			}
+
 		default:
 			time.Sleep(timeout)
 
 			err := SendMessage(logger, msg.Data)
+
 			if err != nil {
 				logger.Errorf("could not send status message: %v", err)
 			}

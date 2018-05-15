@@ -276,8 +276,8 @@ func setupComm(h syscall.Handle, in, out int) error {
 }
 
 func setCommMask(h syscall.Handle) error {
-	const EV_RXCHAR = 0x0001
-	r, _, err := syscall.Syscall(nSetCommMask, 2, uintptr(h), EV_RXCHAR, 0)
+	const evRxChar = 0x0001
+	r, _, err := syscall.Syscall(nSetCommMask, 2, uintptr(h), evRxChar, 0)
 	if r == 0 {
 		return err
 	}
@@ -293,12 +293,13 @@ func resetEvent(h syscall.Handle) error {
 }
 
 func purgeComm(h syscall.Handle) error {
-	const PURGE_TXABORT = 0x0001
-	const PURGE_RXABORT = 0x0002
-	const PURGE_TXCLEAR = 0x0004
-	const PURGE_RXCLEAR = 0x0008
+	const PurgeTxAbort = 0x0001
+	const PurgeRxAbort = 0x0002
+	const PurgeTxClear = 0x0004
+	const PurgeRxClear = 0x0008
+
 	r, _, err := syscall.Syscall(nPurgeComm, 2, uintptr(h),
-		PURGE_TXABORT|PURGE_RXABORT|PURGE_TXCLEAR|PURGE_RXCLEAR, 0)
+		PurgeTxAbort|PurgeRxAbort|PurgeTxClear|PurgeRxClear, 0)
 	if r == 0 {
 		return err
 	}

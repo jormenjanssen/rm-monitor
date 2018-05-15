@@ -215,7 +215,7 @@ func (connectionStatus *ConnectionStatus) SetModemSignal(signalStrength SignalSt
 	}
 }
 
-// SetModemSignal sets the modem signal
+// SetWifiSignal sets the wifi signal
 func (connectionStatus *ConnectionStatus) SetWifiSignal(signalStrength SignalStrength) {
 
 	if signalStrength == NoSignal {
