@@ -112,7 +112,7 @@ func WatchModem(ctx context.Context, logger *Logger, modemStatusMessageChannel c
 					}
 				} else {
 					// Report we don't have a config of a modem
-					modemStatusMessageChannel <- ModemStatusMessage{ConfigAvailable: false, ModemAvailable: CheckModemConfigAvailable()}
+					modemStatusMessageChannel <- ModemStatusMessage{ConfigAvailable: false, ModemAvailable: CheckModemAvailable()}
 
 					// Sleep a while before retrying.
 					time.Sleep(timeout)
@@ -120,6 +120,15 @@ func WatchModem(ctx context.Context, logger *Logger, modemStatusMessageChannel c
 			}
 		}
 	}()
+}
+
+// CheckModemAvailable check if the system has a modem device available
+func CheckModemAvailable() bool {
+
+	modemport := getModemPort()
+
+	_, err := os.Stat(modemport)
+	return err == nil
 }
 
 // CheckModemConfigAvailable checks if a modem config file is available
