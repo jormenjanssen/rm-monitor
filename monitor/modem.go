@@ -112,7 +112,7 @@ func WatchModem(ctx context.Context, logger *Logger, modemStatusMessageChannel c
 					}
 				} else {
 					// Report we only have a config not an actual modem
-					modemStatusMessageChannel <- ModemStatusMessage{ConfigAvailable: false}
+					modemStatusMessageChannel <- ModemStatusMessage{ConfigAvailable: true, ModemAvailable: false}
 
 					// Sleep a while before retrying.
 					time.Sleep(timeout)

@@ -136,6 +136,11 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 
 func setModemLed(logger *Logger, modemStatusMessage ModemStatusMessage) {
 	executeWithLogger(logger, "led:broadband", func() error {
+
+		if modemStatusMessage.ConfigAvailable && !modemStatusMessage.ModemAvailable {
+			return SetBroadbandLed(ErrorSignal)
+		}
+
 		if modemStatusMessage.DataAvailable {
 			return SetBroadbandLed(GoodSignal)
 		}
