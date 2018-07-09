@@ -205,6 +205,7 @@ func (atCommand *AtHandle) Execute(handler *AtCommandHandler) error {
 	cmdBytes := []byte(cmd)
 
 	n, err := handler.writer.Write(cmdBytes)
+
 	if err != nil {
 		return err
 	}

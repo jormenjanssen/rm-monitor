@@ -53,7 +53,6 @@ func main() {
 }
 
 func executeWithLogger(logger *Logger, context string, fn func() error) {
-
 	err := fn()
 	if err != nil {
 		logger.WarningF("%v %v", context, err)
@@ -124,7 +123,6 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 
 		default:
 			time.Sleep(timeout)
-
 			err := SendMessage(logger, msg.Data)
 
 			if err != nil {

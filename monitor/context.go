@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func monitorContext(logger *Logger, cancel func(), signalChannel chan os.Signal) {
@@ -14,7 +15,18 @@ func monitorContext(logger *Logger, cancel func(), signalChannel chan os.Signal)
 		logger.DebugF("Got signal: %v invoking cancellation of context", s)
 	}
 
+	// Defer emergency shutdown
+	go func() {
+		<-time.After(10 * time.Second)
+		emergencyExit(logger)
+	}()
+
 	cancel()
+}
+
+func emergencyExit(logger *Logger) {
+	logger.WarningF("Invoked the emergency killer because the process did not shutdown in timely fashion")
+	os.Exit(-101)
 }
 
 // CreateApplicationContext creates context which respects application shutdown
