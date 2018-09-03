@@ -391,10 +391,6 @@ func ATCNSMOD(parentCtx context.Context, handler *AtCommandHandler) (bct Broadba
 					// Todo: Add 4G support
 				}
 
-				if IsTraceMode() {
-					fmt.Println(fmt.Printf("Trace connection type: %v", ct))
-				}
-
 				return ATCompletedReadNext()
 			})}
 

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 )
@@ -119,10 +118,6 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 			msg.ConnectionStatus().SetSimPinOK(modemMessage.SimpinOk)
 			msg.ConnectionStatus().SetModemSignal(modemMessage.SignalStrength)
 			msg.ConnectionStatus().SetBroadbandConnectionType(modemMessage.BroadbandConnType)
-
-			if IsTraceMode() {
-				fmt.Println(fmt.Printf("Received broadband conn type: %v", modemMessage.BroadbandConnType))
-			}
 
 			setModemLed(logger, modemMessage)
 

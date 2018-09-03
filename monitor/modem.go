@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 )
@@ -26,8 +27,8 @@ type ModemStatusMessage struct {
 // TranslateModemDBM translates dbm, ber into a rawvalue
 func TranslateModemDBM(rawValue int, berValue int) SignalStrength {
 
-	if berValue == 99 {
-		return NoSignal
+	if IsTraceMode() && berValue == 99 {
+		fmt.Println(fmt.Printf("Value ber in AT+CSQ (not dectectable)"))
 	}
 
 	if berValue > 7 {
