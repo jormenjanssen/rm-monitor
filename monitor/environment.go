@@ -19,3 +19,8 @@ func IsTargetDevice() bool {
 func IsDebugMode() bool {
 	return os.Getenv("DEBUG") != ""
 }
+
+// IsTraceMode check if we have trace enabled
+func IsTraceMode() bool {
+	return os.Getenv("TRACE") != ""
+}

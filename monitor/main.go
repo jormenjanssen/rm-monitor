@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 )
@@ -110,7 +111,7 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 			if ethernetMessage.Wifi0.Connected {
 				msg.ConnectionStatus().SetWifiSignal(FairSignal)
 			} else {
-				msg.ConnectionStatus().SetWifiSignal(ErrorSignal)
+				msg.ConnectionStatus().SetWifiSignal(NoSignal)
 			}
 			setConnectionLeds(logger, ethernetMessage)
 		case modemMessage := <-monitorChannel.ModemStatusMessageChannel:
@@ -118,6 +119,10 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 			msg.ConnectionStatus().SetSimPinOK(modemMessage.SimpinOk)
 			msg.ConnectionStatus().SetModemSignal(modemMessage.SignalStrength)
 			msg.ConnectionStatus().SetBroadbandConnectionType(modemMessage.BroadbandConnType)
+
+			if IsTraceMode() {
+				fmt.Println(fmt.Printf("Received broadband conn type: %v", modemMessage.BroadbandConnType))
+			}
 
 			setModemLed(logger, modemMessage)
 

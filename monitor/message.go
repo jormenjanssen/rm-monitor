@@ -218,7 +218,7 @@ func (connectionStatus *ConnectionStatus) SetModemSignal(signalStrength SignalSt
 // SetWifiSignal sets the wifi signal
 func (connectionStatus *ConnectionStatus) SetWifiSignal(signalStrength SignalStrength) {
 
-	if signalStrength == NoSignal {
+	if signalStrength == NoSignal || signalStrength == ErrorSignal {
 		setBit(connectionStatus.State1, 1, true)
 		setBit(connectionStatus.State1, 2, true)
 		setBit(connectionStatus.State1, 3, true)
