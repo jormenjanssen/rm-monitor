@@ -241,7 +241,25 @@ func (connectionStatus *ConnectionStatus) SetWifiSignal(signalStrength SignalStr
 		setBit(connectionStatus.State1, 2, false)
 		setBit(connectionStatus.State1, 3, true)
 	}
+}
 
+// SetBroadbandConnectionType sets the wifi signal
+func (connectionStatus *ConnectionStatus) SetBroadbandConnectionType(broadbandConnType BroadbandConnType) {
+
+	if broadbandConnType == ConnTypeNoNetwork {
+		setBit(connectionStatus.State1, 6, false)
+		setBit(connectionStatus.State1, 7, false)
+	}
+
+	if broadbandConnType == ConnType2G {
+		setBit(connectionStatus.State1, 6, true)
+		setBit(connectionStatus.State1, 7, false)
+	}
+
+	if broadbandConnType == ConnType3G || broadbandConnType == ConnType4G {
+		setBit(connectionStatus.State1, 6, true)
+		setBit(connectionStatus.State1, 7, true)
+	}
 }
 
 func setBit(b *byte, bit uint, value bool) {

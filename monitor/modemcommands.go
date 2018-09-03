@@ -48,6 +48,7 @@ func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Lo
 			simpinOk := true
 			gotSimID := true
 			signal := NoSignal
+			connType := ConnTypeNoNetwork
 			csq := 0
 			ber := 0
 
@@ -95,6 +96,11 @@ func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Lo
 				ber = csqRes.Ber
 			}
 
+			// Check modem connection type
+			if err := TryHandleAtCommandError(logger, "AT+CNSMOD?", err, func() { connType = ConnTypeNoNetwork }); err != nil {
+				return initialConnected, err
+			}
+
 			// GET SIM ID
 			str, err := ATCCID(ctx, handler)
 
@@ -105,11 +111,12 @@ func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Lo
 			signal = TranslateModemDBM(csq, ber)
 
 			modemStatusMessageChannel <- ModemStatusMessage{
-				ModemAvailable: modemAvailable,
-				DataAvailable:  simpinOk,
-				SignalStrength: signal,
-				SimpinOk:       simpinOk,
-				SimUccid:       str,
+				ModemAvailable:    modemAvailable,
+				DataAvailable:     simpinOk,
+				SignalStrength:    signal,
+				SimpinOk:          simpinOk,
+				SimUccid:          str,
+				BroadbandConnType: connType,
 			}
 		}
 	}
@@ -354,6 +361,47 @@ func ATCSQ(parentCtx context.Context, handler *AtCommandHandler) (csqRes CsqResu
 
 	return CsqResult{}, err
 
+}
+
+// ATCNSMOD command function
+func ATCNSMOD(parentCtx context.Context, handler *AtCommandHandler) (bct BroadbandConnType, err error) {
+
+	res, err := handler.HandleCommandWithOutput(parentCtx, func(ctx context.Context, cancel context.CancelFunc) (ct interface{}, err error) {
+
+		ct = ConnTypeNoNetwork
+		command := &AtHandle{
+			Command: "AT+CNSMOD?",
+			ctx:     ctx,
+			cancel:  cancel,
+			handler: ATPrefixHandler("+CNSMOD", func(line string) (bool, bool, error) {
+
+				items := strings.Split(line, ",")
+				n, err := strconv.Atoi(items[1])
+
+				if err == nil && n > 0 {
+
+					if n <= 3 {
+						ct = ConnType2G
+					} else {
+						ct = ConnType3G
+					}
+					// Todo: Add 4G support
+				}
+				return ATCompletedReadNext()
+			})}
+
+		err = command.Execute(handler)
+		return ct, err
+	})
+
+	// Type cast magic
+	bctr, ok := res.(BroadbandConnType)
+
+	if ok {
+		return bctr, err
+	}
+
+	return bctr, err
 }
 
 func getCcidFromCcidLine(line string) string {

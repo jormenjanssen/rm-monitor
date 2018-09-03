@@ -13,13 +13,14 @@ const modemConfigFile = "/etc/wvdial.conf"
 
 // ModemStatusMessage structure
 type ModemStatusMessage struct {
-	ConfigAvailable  bool
-	ModemAvailable   bool
-	DataAvailable    bool
-	SimUccid         string
-	SimpinOk         bool
-	SimCardAvailable bool
-	SignalStrength   SignalStrength
+	ConfigAvailable   bool
+	ModemAvailable    bool
+	DataAvailable     bool
+	SimUccid          string
+	SimpinOk          bool
+	SimCardAvailable  bool
+	SignalStrength    SignalStrength
+	BroadbandConnType BroadbandConnType
 }
 
 // TranslateModemDBM translates dbm, ber into a rawvalue

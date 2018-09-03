@@ -107,11 +107,17 @@ func messageloop(ctx context.Context, logger *Logger, monitorChannel MonitorChan
 			msg.ConnectionStatus().SetEth1Status(ethernetMessage.Eth1.Connected)
 			msg.ConnectionStatus().SetEthernetConfigurationStatus(ethernetMessage.EthernetConfigured)
 			msg.ConnectionStatus().SetWifiEnabled(ethernetMessage.Wifi0.Connected)
+			if ethernetMessage.Wifi0.Connected {
+				msg.ConnectionStatus().SetWifiSignal(FairSignal)
+			} else {
+				msg.ConnectionStatus().SetWifiSignal(ErrorSignal)
+			}
 			setConnectionLeds(logger, ethernetMessage)
 		case modemMessage := <-monitorChannel.ModemStatusMessageChannel:
 			msg.ConnectionStatus().SetMobileInternetEnabled(modemMessage.ModemAvailable)
 			msg.ConnectionStatus().SetSimPinOK(modemMessage.SimpinOk)
 			msg.ConnectionStatus().SetModemSignal(modemMessage.SignalStrength)
+			msg.ConnectionStatus().SetBroadbandConnectionType(modemMessage.BroadbandConnType)
 
 			setModemLed(logger, modemMessage)
 
