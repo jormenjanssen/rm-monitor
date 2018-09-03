@@ -96,6 +96,9 @@ func handleAT(ctx context.Context, port *Port, timeout time.Duration, logger *Lo
 				ber = csqRes.Ber
 			}
 
+			// Check broadband connection type
+			connType, err = ATCNSMOD(ctx, handler)
+
 			// Check modem connection type
 			if err := TryHandleAtCommandError(logger, "AT+CNSMOD?", err, func() { connType = ConnTypeNoNetwork }); err != nil {
 				return initialConnected, err
@@ -391,6 +394,7 @@ func ATCNSMOD(parentCtx context.Context, handler *AtCommandHandler) (bct Broadba
 			})}
 
 		err = command.Execute(handler)
+
 		return ct, err
 	})
 
@@ -401,7 +405,7 @@ func ATCNSMOD(parentCtx context.Context, handler *AtCommandHandler) (bct Broadba
 		return bctr, err
 	}
 
-	return bctr, err
+	return ConnTypeNoNetwork, err
 }
 
 func getCcidFromCcidLine(line string) string {
