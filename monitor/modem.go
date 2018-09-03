@@ -31,7 +31,7 @@ func TranslateModemDBM(rawValue int, berValue int) SignalStrength {
 		fmt.Println(fmt.Printf("Value ber in AT+CSQ (not dectectable)"))
 	}
 
-	if berValue > 7 {
+	if berValue > 7 && berValue != 99 {
 		return WeakSignal
 	}
 

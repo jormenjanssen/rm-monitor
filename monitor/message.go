@@ -209,9 +209,9 @@ func (connectionStatus *ConnectionStatus) SetModemSignal(signalStrength SignalSt
 	}
 
 	if signalStrength == GoodSignal {
-		setBit(connectionStatus.State2, 1, false)
-		setBit(connectionStatus.State2, 2, false)
-		setBit(connectionStatus.State2, 3, true)
+		setBit(connectionStatus.State2, 1, true)
+		setBit(connectionStatus.State2, 2, true)
+		setBit(connectionStatus.State2, 3, false)
 	}
 }
 
