@@ -7,7 +7,7 @@ script:
 - export ARCH=arm
 - export ARM=7
 - cd monitor
-- go build
+- go build -ldflags "-s -w"
 after_script:
 - ls -l $HOME/gopath/src/github.com/jormenjanssen/rm-monitor
 - ls -l $HOME/gopath/src/github.com/jormenjanssen/rm-monitor/monitor
