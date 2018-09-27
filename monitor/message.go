@@ -191,27 +191,27 @@ func (rimotestatus *RimoteStatus) SetRimoteConfOk(value bool) {
 func (connectionStatus *ConnectionStatus) SetModemSignal(signalStrength SignalStrength) {
 
 	if signalStrength == NoSignal {
+		setBit(connectionStatus.State2, 0, true)
 		setBit(connectionStatus.State2, 1, true)
 		setBit(connectionStatus.State2, 2, true)
-		setBit(connectionStatus.State2, 3, true)
 	}
 
 	if signalStrength == WeakSignal {
-		setBit(connectionStatus.State2, 1, true)
+		setBit(connectionStatus.State2, 0, true)
+		setBit(connectionStatus.State2, 1, false)
 		setBit(connectionStatus.State2, 2, false)
-		setBit(connectionStatus.State2, 3, false)
 	}
 
 	if signalStrength == FairSignal {
-		setBit(connectionStatus.State2, 1, false)
-		setBit(connectionStatus.State2, 2, true)
-		setBit(connectionStatus.State2, 3, false)
+		setBit(connectionStatus.State2, 0, false)
+		setBit(connectionStatus.State2, 1, true)
+		setBit(connectionStatus.State2, 2, false)
 	}
 
 	if signalStrength == GoodSignal {
+		setBit(connectionStatus.State2, 0, true)
 		setBit(connectionStatus.State2, 1, true)
-		setBit(connectionStatus.State2, 2, true)
-		setBit(connectionStatus.State2, 3, false)
+		setBit(connectionStatus.State2, 2, false)
 	}
 }
 
